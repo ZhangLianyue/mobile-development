@@ -7,9 +7,14 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +29,10 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import cn.edu.pku.zhanglianyue.bean.TodayWeather;
 import cn.edu.pku.zhanglianyue.util.NetUtil;
@@ -32,7 +41,7 @@ import cn.edu.pku.zhanglianyue.util.NetUtil;
  * Created by zhanglianyue on 2017/9/27.
  */
 
-public class MainActivity extends Activity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,ViewPager.OnPageChangeListener{
     private static final int UPDATE_TODAY_WEATHER = 1;
     private ImageView mUpdateBtn;
 
@@ -41,6 +50,13 @@ public class MainActivity extends Activity implements View.OnClickListener{
     private TextView cityTv, timeTv, humidityTv, weekTv, pmDataTv, pmQualityTv,
             temperatureTv, climateTv, windTv, city_name_Tv;
     private ImageView weatherImg, pmImg;
+
+    private ViewPagesAdapter vpAdapter;
+    private ViewPager vp;
+    private List<View> views;
+    private ImageView[] dots;
+    private int[] ids = {R.id.iv1,R.id.iv2};
+    private Button btn;
 
     private Handler mHandler = new Handler() {
         public void handleMessage(android.os.Message msg) {
@@ -55,28 +71,61 @@ public class MainActivity extends Activity implements View.OnClickListener{
 
     };
 
+
+    void initDots(){
+        dots = new ImageView[views.size()];
+        for (int i = 0;i < views.size();i++){
+            dots[i] = (ImageView) findViewById(ids[i]);
+        }
+    }
+
+    private  void initViews(){
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        views = new ArrayList<View>();
+        views.add(layoutInflater.inflate(R.layout.page1,null));
+        views.add(layoutInflater.inflate(R.layout.page2,null));
+//        views.add(layoutInflater.inflate(R.layout.page3,null));
+        vpAdapter = new ViewPagesAdapter(views,this);
+        vp = (ViewPager)findViewById(R.id.viewPage);
+        vp.setAdapter(vpAdapter);
+        vp.setOnPageChangeListener(this);
+//        btn = (Button)views.get(2).findViewById(R.id.btn);
+//        btn.setOnClickListener(new View.OnClickListener() {
+//
+//            @Override
+//            public void onClick(View v) {
+//                Intent i = new Intent(Guide.this,MainActivity.class);
+//                startActivity(i);
+//                finish();
+//            }
+//        });
+    }
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
-        setContentView(R.layout.weather_info);
+    }
 
-        mUpdateBtn = (ImageView) findViewById(R.id.title_update_btn);
-        mUpdateBtn.setOnClickListener(this);
-
-        if (NetUtil.getNetworkState(this) != NetUtil.NETWORN_NONE) {
-            Log.d("myWeather", "网络OK");
-            Toast.makeText(MainActivity.this, "网络OK！", Toast.LENGTH_LONG).show();
-        } else {
-            Log.d("myWeather", "网络挂了");
-            Toast.makeText(MainActivity.this, "网络挂了！", Toast.LENGTH_LONG).show();
+    @Override
+    public void onPageSelected(int i) {
+        for (int j = 0;j <ids.length;j++){
+            if (j == i){
+                dots[j].setImageResource(R.drawable.page_indicator_focused);
+            }else{
+                dots[j].setImageResource(R.drawable.page_indicator_unfocused);
+            }
         }
 
-        mCitySelect = (ImageView) findViewById(R.id.title_city_manager);
-                mCitySelect.setOnClickListener(this);
-
-        initView();
     }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
+    }
+
+
+
+
 
     void initView(){
 
@@ -93,6 +142,10 @@ public class MainActivity extends Activity implements View.OnClickListener{
         windTv = (TextView) findViewById(R.id.wind);
         weatherImg = (ImageView) findViewById(R.id.weather_img);
 
+
+        LayoutInflater layout=this.getLayoutInflater();
+        View view=layout.inflate(R.layout.page1, null);
+
         city_name_Tv.setText("N/A");
         cityTv.setText("N/A");
         timeTv.setText("N/A");
@@ -106,6 +159,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
     }
 
     private TodayWeather parseXML(String xmldata){
+        System.out.println("today weather："+xmldata);
         TodayWeather todayWeather = null;
         int fengxiangCount=0;
         int fengliCount =0;
@@ -281,6 +335,46 @@ public class MainActivity extends Activity implements View.OnClickListener{
     }
 
     void updateTodayWeather(TodayWeather todayWeather){
+
+        String high = null;
+        String low = null;
+        String high_day0 = null;
+        String low_day0 = null;
+        String high_day1 = null;
+        String low_day1 = null;
+        String high_day2 = null;
+        String low_day2 = null;
+        String high_day3 = null;
+        String low_day3 = null;
+        String high_day4 = null;
+        String low_day4 = null;
+
+        if (todayWeather.getHigh()!=null && todayWeather.getLow()!=null ){
+            high = todayWeather.getHigh().substring(2);
+            low = todayWeather.getLow().substring(2);
+        }
+        if (todayWeather.getHigh_day0()!=null && todayWeather.getLow_day0()!=null ){
+            high_day0 = todayWeather.getHigh_day0().substring(2);
+            low_day0 = todayWeather.getLow_day0().substring(2);
+        }
+        if (todayWeather.getHigh_day1()!=null && todayWeather.getLow_day1()!=null ){
+            high_day1 = todayWeather.getHigh_day1().substring(2);
+            low_day1 = todayWeather.getLow_day1().substring(2);
+        }
+        if (todayWeather.getHigh_day2()!=null && todayWeather.getLow_day2()!=null ){
+            high_day2 = todayWeather.getHigh_day2().substring(2);
+            low_day2 = todayWeather.getLow_day2().substring(2);
+        }
+        if (todayWeather.getHigh_day3()!=null && todayWeather.getLow_day3()!=null ){
+            high_day3 = todayWeather.getHigh_day3().substring(2);
+            low_day3 = todayWeather.getLow_day3().substring(2);
+        }
+        if (todayWeather.getHigh_day4()!=null && todayWeather.getLow_day4()!=null ){
+            high_day4 = todayWeather.getHigh_day4().substring(2);
+            low_day4 = todayWeather.getLow_day4().substring(2);
+        }
+
+
         city_name_Tv.setText(todayWeather.getCity()+"天气");
         cityTv.setText(todayWeather.getCity());
         timeTv.setText(todayWeather.getUpdatetime()+ "发布");
@@ -288,11 +382,42 @@ public class MainActivity extends Activity implements View.OnClickListener{
         pmDataTv.setText(todayWeather.getPm25());
         pmQualityTv.setText(todayWeather.getQuality());
         weekTv.setText(todayWeather.getDate());
-        temperatureTv.setText(todayWeather.getHigh()+"~"+todayWeather.getLow());
+
+        temperatureTv.setText(low+"~"+high);
         climateTv.setText(todayWeather.getType());
         windTv.setText("风力:"+todayWeather.getFengli());
 
-        int IntPm25 = Integer.parseInt(todayWeather.getPm25());
+
+
+        ViewPagesAdapter.ViewHolder holder = (ViewPagesAdapter.ViewHolder)views.get(0).getTag();
+        holder.temperatureTv_day1.setText(low_day0+"~"+high_day0);
+        holder.climateTv_day1.setText(todayWeather.getType_day0());
+        holder.weekTv_day1.setText(todayWeather.getDate_day0());
+        holder.temperatureTv_day2.setText(low+"~"+high);
+        holder.climateTv_day2.setText(todayWeather.getType());
+        holder.weekTv_day2.setText(todayWeather.getDate());
+        holder.temperatureTv_day3.setText(low_day1+"~"+high_day1);
+        holder.climateTv_day3.setText(todayWeather.getType_day1());
+        holder.weekTv_day3.setText(todayWeather.getDate_day1());
+        //页面2
+        ViewPagesAdapter.ViewHolder holder2 = (ViewPagesAdapter.ViewHolder)views.get(1).getTag();
+        holder2.temperatureTv_day4.setText(low_day2+"~"+high_day2);
+        holder2.climateTv_day4.setText(todayWeather.getType_day2());
+        holder2.weekTv_day4.setText(todayWeather.getDate_day2());
+        holder2.temperatureTv_day5.setText(low_day3+"~"+high_day3);
+        holder2.climateTv_day5.setText(todayWeather.getType_day3());
+        holder2.weekTv_day5.setText(todayWeather.getDate_day3());
+        holder2.temperatureTv_day6.setText(low_day4+"~"+high_day4);
+        holder2.climateTv_day6.setText(todayWeather.getType_day4());
+        holder2.weekTv_day6.setText(todayWeather.getDate_day4());
+
+
+        if(0==1){
+
+        }
+        System.out.println("---------------pm25"+todayWeather.getPm25());
+        //System.out.println("---------------pm25"+todayWeather.getPm25().equals("null"));
+        int IntPm25 = Integer.parseInt(todayWeather.getPm25()==null||todayWeather.getPm25().equals("null")?"0":todayWeather.getPm25());
         int Pm25Value = 0;
         if(IntPm25 > 50 && IntPm25 <= 100){
             Pm25Value = 1;
@@ -389,6 +514,33 @@ public class MainActivity extends Activity implements View.OnClickListener{
         }
 
         Toast.makeText(MainActivity.this,"更新成功！",Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.weather_info);
+
+
+        mUpdateBtn = (ImageView) findViewById(R.id.title_update_btn);
+        mUpdateBtn.setOnClickListener(this);
+
+        if (NetUtil.getNetworkState(this) != NetUtil.NETWORN_NONE) {
+            Log.d("myWeather", "网络OK");
+            Toast.makeText(MainActivity.this, "网络OK！", Toast.LENGTH_LONG).show();
+        } else {
+            Log.d("myWeather", "网络挂了");
+            Toast.makeText(MainActivity.this, "网络挂了！", Toast.LENGTH_LONG).show();
+        }
+
+        mCitySelect = (ImageView) findViewById(R.id.title_city_manager);
+        mCitySelect.setOnClickListener(this);
+
+        initView();
+
+        initViews();
+        initDots();
     }
 
 
